@@ -1,10 +1,7 @@
 package jmd
 
 import com.github.javaparser.ast.CompilationUnit
-import com.github.javaparser.ast.body.FieldDeclaration
-import com.github.javaparser.ast.body.MethodDeclaration
-import com.github.javaparser.ast.body.Parameter
-import com.github.javaparser.ast.body.TypeDeclaration
+import com.github.javaparser.ast.body.*
 import com.github.javaparser.ast.comments.Comment
 import java.util.*
 
@@ -102,6 +99,7 @@ class Type(val id: String, t: TypeDeclaration<*>) {
     val doc = formatComment(t.comment)
     val fields = mutableListOf<Field>()
     val methods = mutableListOf<Method>()
+    val constructors = mutableListOf<Constructor>()
     var superTypes: String? = null
 
     init {
@@ -110,9 +108,21 @@ class Type(val id: String, t: TypeDeclaration<*>) {
                 fields.add(Field(f))
             }
         }
-        t.methods.forEach { m ->
-            if (m.isPublic) {
-                methods.add(Method(m))
+        val ciDef = if (t.isClassOrInterfaceDeclaration)
+            t.asClassOrInterfaceDeclaration()
+        else
+            null
+        t.members.forEach { m ->
+            if (m.isMethodDeclaration) {
+                val method = m.asMethodDeclaration();
+                if (method.isPublic || (ciDef != null && ciDef.isInterface)) {
+                    methods.add(Method(method))
+                }
+            } else if (m.isConstructorDeclaration) {
+                val constructor = m.asConstructorDeclaration()
+                if (constructor.isPublic) {
+                    constructors.add(Constructor(constructor))
+                }
             }
         }
 
@@ -138,14 +148,12 @@ class Type(val id: String, t: TypeDeclaration<*>) {
             s += " < $superTypes"
         }
         s += "\n\n$doc\n\n"
+        constructors.sortBy { it.name }
+        constructors.forEach { s += it.markdown() }
         fields.sortBy { it.name }
-        fields.forEach {
-            s += it.markdown()
-        }
+        fields.forEach { s += it.markdown() }
         methods.sortBy { it.name }
-        methods.forEach {
-            s += it.markdown()
-        }
+        methods.forEach { s += it.markdown() }
         return s
     }
 }
@@ -181,7 +189,33 @@ class Method(d: MethodDeclaration) {
         if (!params.isEmpty()) {
             s += "Parameters:\n\n"
             params.forEach { p ->
-                s += "0. ${p.name} : ${p.type}\n"
+                s += "* ${p.name} : ${p.type}\n"
+            }
+            s += "\n"
+        }
+        s += "$doc\n\n"
+        return s
+    }
+}
+
+class Constructor(d: ConstructorDeclaration) {
+
+    val name = d.nameAsString
+    val doc = formatComment(d.comment)
+    val params = mutableListOf<Param>()
+
+    init {
+        d.parameters.forEach { p ->
+            params.add(Param(p))
+        }
+    }
+
+    fun markdown(): String {
+        var s = "### $name()\n\n"
+        if (!params.isEmpty()) {
+            s += "Parameters:\n\n"
+            params.forEach { p ->
+                s += "* ${p.name} : ${p.type}\n"
             }
             s += "\n"
         }
@@ -191,8 +225,6 @@ class Method(d: MethodDeclaration) {
 }
 
 class Param(d: Parameter) {
-
     val name = d.name
     val type = d.type.toString()
-
 }
