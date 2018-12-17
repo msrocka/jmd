@@ -2,6 +2,8 @@ package jmd
 
 import com.github.javaparser.ast.CompilationUnit
 import com.github.javaparser.ast.body.FieldDeclaration
+import com.github.javaparser.ast.body.MethodDeclaration
+import com.github.javaparser.ast.body.Parameter
 import com.github.javaparser.ast.body.TypeDeclaration
 import com.github.javaparser.ast.comments.Comment
 import java.util.*
@@ -99,6 +101,7 @@ class Type(val id: String, t: TypeDeclaration<*>) {
     val name = t.nameAsString
     val doc = formatComment(t.comment)
     val fields = mutableListOf<Field>()
+    val methods = mutableListOf<Method>()
     var superTypes: String? = null
 
     init {
@@ -107,6 +110,12 @@ class Type(val id: String, t: TypeDeclaration<*>) {
                 fields.add(Field(f))
             }
         }
+        t.methods.forEach { m ->
+            if (m.isPublic) {
+                methods.add(Method(m))
+            }
+        }
+
         if (t.isClassOrInterfaceDeclaration) {
             val decl = t.asClassOrInterfaceDeclaration()
             var extends = ""
@@ -133,6 +142,10 @@ class Type(val id: String, t: TypeDeclaration<*>) {
         fields.forEach {
             s += it.markdown()
         }
+        methods.sortBy { it.name }
+        methods.forEach {
+            s += it.markdown()
+        }
         return s
     }
 }
@@ -148,4 +161,38 @@ class Field(d: FieldDeclaration) {
         s += "$doc\n\n"
         return s
     }
+}
+
+class Method(d: MethodDeclaration) {
+
+    val name = d.nameAsString
+    val doc = formatComment(d.comment)
+    val type = d.type.toString()
+    val params = mutableListOf<Param>()
+
+    init {
+        d.parameters.forEach { p ->
+            params.add(Param(p))
+        }
+    }
+
+    fun markdown(): String {
+        var s = "### $name() : $type\n\n"
+        if (!params.isEmpty()) {
+            s += "Parameters:\n\n"
+            params.forEach { p ->
+                s += "0. ${p.name} : ${p.type}\n"
+            }
+            s += "\n"
+        }
+        s += "$doc\n\n"
+        return s
+    }
+}
+
+class Param(d: Parameter) {
+
+    val name = d.name
+    val type = d.type.toString()
+
 }
