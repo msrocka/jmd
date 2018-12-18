@@ -114,7 +114,7 @@ class Type(val id: String, t: TypeDeclaration<*>) {
             null
         t.members.forEach { m ->
             if (m.isMethodDeclaration) {
-                val method = m.asMethodDeclaration();
+                val method = m.asMethodDeclaration()
                 if (method.isPublic || (ciDef != null && ciDef.isInterface)) {
                     methods.add(Method(method))
                 }
@@ -152,6 +152,7 @@ class Type(val id: String, t: TypeDeclaration<*>) {
         if (superTypes != null) {
             s += " > $superTypes"
         }
+        s = s.replace("<", "\\<").replace(">", "\\>")
         s += "\n\n$doc\n\n"
         constructors.sortBy { it.name }
         constructors.forEach { s += it.markdown() }
@@ -197,8 +198,9 @@ class Method(d: MethodDeclaration) {
 
     fun markdown(): String {
         var s = "### $name() : $type\n\n"
+        s = s.replace("<", "\\<").replace(">", "\\>")
         if (!params.isEmpty()) {
-            s += "Parameters:\n\n"
+            s += "_Parameters:_\n\n"
             params.forEach { p ->
                 s += "* ${p.name} : ${p.type}\n"
             }
@@ -224,7 +226,7 @@ class Constructor(d: ConstructorDeclaration) {
     fun markdown(): String {
         var s = "### $name()\n\n"
         if (!params.isEmpty()) {
-            s += "Parameters:\n\n"
+            s += "_Parameters:_\n\n"
             params.forEach { p ->
                 s += "* ${p.name} : ${p.type}\n"
             }
