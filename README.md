@@ -3,5 +3,8 @@
 It extracts the JavaDoc comments and public symbols from the Java source files
 using [JavaParser](https://github.com/javaparser/javaparser). The generated
 output is particularly suitable for further processing with tools like
-[Pandoc](https://pandoc.org/).
+[Pandoc](https://pandoc.org/). With this, you can generate a document that looks
+like this (using LaTeX equations etc.):
+
+![](example.png)
  

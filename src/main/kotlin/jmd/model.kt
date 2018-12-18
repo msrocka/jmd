@@ -126,10 +126,15 @@ class Type(val id: String, t: TypeDeclaration<*>) {
             }
         }
 
-        if (t.isClassOrInterfaceDeclaration) {
-            val decl = t.asClassOrInterfaceDeclaration()
+        if (ciDef != null) {
             var extends = ""
-            decl.extendedTypes.forEach { s ->
+            ciDef.extendedTypes.forEach { s ->
+                if (extends != "") {
+                    extends += ", "
+                }
+                extends += s.nameAsString
+            }
+            ciDef.implementedTypes.forEach { s ->
                 if (extends != "") {
                     extends += ", "
                 }
@@ -145,7 +150,7 @@ class Type(val id: String, t: TypeDeclaration<*>) {
         // var s = "<a name=\"$id\"></a>\n\n"
         var s = "## $name"
         if (superTypes != null) {
-            s += " < $superTypes"
+            s += " > $superTypes"
         }
         s += "\n\n$doc\n\n"
         constructors.sortBy { it.name }
@@ -174,13 +179,19 @@ class Field(d: FieldDeclaration) {
 class Method(d: MethodDeclaration) {
 
     val name = d.nameAsString
-    val doc = formatComment(d.comment)
-    val type = d.type.toString()
-    val params = mutableListOf<Param>()
+    private var doc = formatComment(d.comment)
+    private val type = d.type.toString()
+    private val params = mutableListOf<Param>()
 
     init {
         d.parameters.forEach { p ->
             params.add(Param(p))
+        }
+        if (d.annotations != null) {
+            val a = d.annotations.find { a -> a.nameAsString == "Override" }
+            if (a != null && !d.javadocComment.isPresent) {
+                doc = "_Overridden method of supertype._"
+            }
         }
     }
 
