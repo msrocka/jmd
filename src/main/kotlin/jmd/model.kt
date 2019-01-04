@@ -56,7 +56,7 @@ class Model {
             getPackage("default")
         }
         cu.types.forEach { t ->
-            if (t.isPublic) {
+            if (t.isPublic && t.hasJavaDocComment()) {
                 pack.addType(t)
             }
         }
@@ -100,6 +100,7 @@ class Type(val id: String, t: TypeDeclaration<*>) {
     val fields = mutableListOf<Field>()
     val methods = mutableListOf<Method>()
     val constructors = mutableListOf<Constructor>()
+    val enumConstants = mutableListOf<EnumConstant>()
     var superTypes: String? = null
 
     init {
@@ -123,6 +124,11 @@ class Type(val id: String, t: TypeDeclaration<*>) {
                 if (constructor.isPublic) {
                     constructors.add(Constructor(constructor))
                 }
+            }
+        }
+        if (t.isEnumDeclaration) {
+            t.asEnumDeclaration().entries.forEach {d ->
+                enumConstants.add(EnumConstant(d))
             }
         }
 
@@ -154,6 +160,7 @@ class Type(val id: String, t: TypeDeclaration<*>) {
         }
         s = s.replace("<", "\\<").replace(">", "\\>")
         s += "\n\n$doc\n\n"
+        enumConstants.forEach { s += it.markdown() }
         constructors.sortBy { it.name }
         constructors.forEach { s += it.markdown() }
         fields.sortBy { it.name }
@@ -240,4 +247,13 @@ class Constructor(d: ConstructorDeclaration) {
 class Param(d: Parameter) {
     val name = d.name
     val type = d.type.toString()
+}
+
+class EnumConstant(d: EnumConstantDeclaration) {
+    val name = d.name
+    val doc = formatComment(d.comment)
+
+    fun markdown(): String {
+        return "### $name\n\n$doc\n\n"
+    }
 }

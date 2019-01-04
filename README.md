@@ -9,6 +9,12 @@ http://greendelta.github.io/olca-modules):
 
 ![](example.png)
 
+## Usage
+
+```bash
+java -jar jmd.jar --dir path/to/java/src > output.md
+```
+
 ### Generating a standalone html file
 There is a beautiful stylesheet available here: https://gist.github.com/killercup/5917178.
 
