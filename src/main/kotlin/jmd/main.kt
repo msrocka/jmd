@@ -33,7 +33,10 @@ private fun readConfig(args: Array<String>): Config {
 private fun parseFolder(dir: File, model: Model) {
     dir.listFiles().forEach { file ->
         if (file.isDirectory) {
-            parseFolder(file, model)
+            if (file.name != "test"
+                && file.name != "internal") {
+                parseFolder(file, model)
+            }
         } else if (file.name.endsWith(".java")) {
             val cu = JavaParser.parse(file)
             model.addCU(cu)
